@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Best Açaí — Meta Ads</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;
+  --card:#161b22;
+  --border:#30363d;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --green:#56d364;
+  --purple:#8b5cf6;
+  --blue:#58a6ff;
+  --gold:#f0c040;
+  --red:#f85149;
+  --semana:#58a6ff;
+  --fds:#8b5cf6;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+
+/* HEADER */
+header{background:var(--card);border-bottom:2px solid var(--green);padding:1.2rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+header .brand{font-size:.65rem;color:var(--green);font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.2rem}
+header h1{font-size:1.4rem;font-weight:700;letter-spacing:.04em}
+header .info{margin-left:auto;color:var(--muted);font-size:.8rem;text-align:right;line-height:1.6}
+
+/* TABS */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);padding:0 1.5rem;overflow-x:auto;gap:0}
+.tab{padding:.8rem 1.4rem;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-size:.88rem;transition:all .2s;color:var(--muted);font-weight:500}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+
+/* SECTIONS */
+.section{display:none;padding:2rem;max-width:1600px;margin:0 auto}
+.section.active{display:block}
+.section-title{font-size:.95rem;font-weight:600;margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);color:var(--text);display:flex;align-items:center;gap:.5rem}
+.section-title span{font-size:.75rem;color:var(--muted);font-weight:400}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.kpi-card{background:var(--card);border-radius:10px;padding:1.1rem 1.3rem;border:1px solid var(--border);position:relative;cursor:help;transition:transform .15s,border-color .15s}
+.kpi-card:hover{transform:translateY(-2px);border-color:#444}
+.kpi-card .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem}
+.kpi-card .value{font-size:1.6rem;font-weight:700}
+.kpi-card .sub{font-size:.7rem;color:var(--muted);margin-top:.2rem}
+.kpi-card.gold .value{color:var(--gold);font-size:1.9rem}
+.kpi-card .tip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#0a0c10;border:1px solid var(--border);border-radius:8px;padding:.5rem .85rem;font-size:.74rem;color:var(--muted);white-space:nowrap;z-index:200;pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,.6)}
+.kpi-card:hover .tip{display:block}
+
+/* CREATIVE CARDS GRID */
+.cr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-bottom:2.5rem}
+@media(max-width:1100px){.cr-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.cr-grid{grid-template-columns:1fr}}
+
+.cr-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,transform .15s}
+.cr-card:hover{border-color:var(--green);transform:translateY(-3px)}
+.cr-card .media-wrap{position:relative;background:#0a0c10;aspect-ratio:9/16;overflow:hidden;max-height:340px}
+.cr-card .media-wrap img,.cr-card .media-wrap video{width:100%;height:100%;object-fit:cover}
+.cr-card .badge-overlay{position:absolute;top:.5rem;left:.5rem;background:rgba(0,0,0,.65);border-radius:5px;padding:.2rem .55rem;font-size:.68rem;font-weight:600;backdrop-filter:blur(4px)}
+.cr-card .badge-overlay.video{color:#a78bfa;border:1px solid #a78bfa44}
+.cr-card .badge-overlay.img{color:#58a6ff;border:1px solid #58a6ff44}
+.cr-card .cr-body{padding:1rem 1.1rem 1.1rem}
+.cr-card .cr-name{font-size:1.1rem;font-weight:700;margin-bottom:.2rem}
+.cr-card .cr-type{font-size:.72rem;color:var(--muted);margin-bottom:.85rem}
+.cr-card .cr-metrics{}
+.cr-card .cr-metric{display:flex;justify-content:space-between;padding:.28rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
+.cr-card .cr-metric:last-child{border-bottom:none}
+.cr-card .cr-metric .mk{color:var(--muted)}
+.cr-card .cr-metric .mv{font-weight:600}
+.cr-card .cr-metric.clicks-row .mv{color:var(--gold);font-size:1rem;font-weight:700}
+.cr-card .cr-metric.clicks-row .mk{font-size:.85rem;font-weight:600;color:var(--gold)}
+
+/* CHART BOXES */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
+.chart-full{grid-column:1/-1}
+.chart-box{background:var(--card);border-radius:10px;padding:1.4rem;border:1px solid var(--border)}
+.chart-box h3{font-size:.72rem;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:.07em}
+.chart-box canvas{max-height:300px}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-bottom:2rem}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:.83rem}
+th{background:#1c2128;padding:.65rem 1rem;text-align:left;cursor:pointer;white-space:nowrap;user-select:none;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);transition:background .15s}
+th:hover{background:#252c36;color:var(--text)}
+th.sorted-asc::after{content:" ↑";color:var(--gold)}
+th.sorted-desc::after{content:" ↓";color:var(--gold)}
+td{padding:.58rem 1rem;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.025)}
+td.gold{color:var(--gold);font-weight:700;font-size:.93rem}
+td.green{color:var(--green);font-weight:600}
+td.best-badge{padding:.4rem 1rem}
+
+/* BADGE */
+.badge{display:inline-block;padding:.18rem .5rem;border-radius:5px;font-size:.7rem;font-weight:600}
+.badge-shake{background:#1e3a1e;color:#56d364}
+.badge-copos{background:#1e2a3a;color:#58a6ff}
+.badge-cascao{background:#3a2a1e;color:#fb923c}
+.badge-anim-cascao{background:#2a1e3a;color:#c084fc}
+.badge-anim-shake{background:#1a2d2d;color:#34d399}
+.badge-anim-cup{background:#2d2a1e;color:#fbbf24}
+
+/* COMPARE KPI */
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:2rem}
+@media(max-width:700px){.cmp-grid{grid-template-columns:1fr}}
+.cmp-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:1.3rem}
+.cmp-card h3{font-size:.9rem;font-weight:600;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.cmp-semana{border-top:3px solid var(--semana)}
+.cmp-fds{border-top:3px solid var(--fds)}
+.cmp-row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.84rem}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row .ck{color:var(--muted)}
+.cmp-row .cv{font-weight:600}
+.cmp-row.clicks .cv{color:var(--gold);font-size:.95rem}
+
+/* BLOCO CARDS */
+.bloco-section{margin-bottom:2.5rem;padding:1.5rem;background:var(--card);border-radius:12px;border:1px solid var(--border)}
+.bloco-header{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.2rem;padding-bottom:.7rem;border-bottom:1px solid var(--border)}
+.bloco-header h2{font-size:1.05rem;font-weight:700}
+.bloco-header .bdate{font-size:.78rem;color:var(--muted)}
+.bloco-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.8rem;margin-bottom:1.2rem}
+.bloco-kpi .bk{background:var(--bg);border-radius:8px;padding:.7rem 1rem;border:1px solid var(--border)}
+.bloco-kpi .bk .bl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem}
+.bloco-kpi .bk .bv{font-size:1.2rem;font-weight:700}
+.bloco-kpi .bk.gold .bv{color:var(--gold)}
+.bloco-winner{background:#1c2310;border:1px solid #3a4a20;border-radius:8px;padding:.6rem 1rem;font-size:.84rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
+.bloco-winner .trophy{font-size:1.1rem}
+
+/* SEMANA vs FDS */
+.svf-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem}
+@media(max-width:800px){.svf-row{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.svf-row{grid-template-columns:1fr}}
+
+/* FOOTER */
+footer{background:var(--card);border-top:1px solid var(--border);padding:1rem 2rem;text-align:center;font-size:.74rem;color:var(--muted);margin-top:2rem;line-height:1.8}
+footer strong{color:var(--text)}
+
+@media(max-width:900px){
+  .charts-row{grid-template-columns:1fr}
+  .chart-full{grid-column:auto}
+  .section{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand">Best Açaí</div>
+    <h1>Dashboard Meta Ads</h1>
+  </div>
+  <div class="info">
+    Período: <strong>17/03/2026 – 23/03/2026</strong><br>
+    Gerado em: <strong>25/03/2026</strong>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="showTab('criativos',this)">Criativos</div>
+  <div class="tab" onclick="showTab('por-cidade',this)">Por Cidade</div>
+  <div class="tab" onclick="showTab('por-bloco',this)">Por Bloco</div>
+  <div class="tab" onclick="showTab('semana-fds',this)">Semana vs FDS</div>
+  <div class="tab" onclick="showTab('visao-geral',this)">Visão Geral</div>
+</nav>
+
+<!-- ============================
+     ABA: CRIATIVOS
+     ============================ -->
+<section id="criativos" class="section active">
+  <div class="section-title">Criativos <span>— Semana + FDS combinados</span></div>
+
+  <div class="cr-grid" id="cr-cards"></div>
+
+  <div class="section-title">Ranking de Criativos</div>
+  <div class="charts-row">
+    <div class="chart-box">
+      <h3>Cliques por Criativo</h3>
+      <canvas id="chart-cr-clicks"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>CTR (%) por Criativo</h3>
+      <canvas id="chart-cr-ctr"></canvas>
+    </div>
+    <div class="chart-box chart-full">
+      <h3>Alcance por Criativo</h3>
+      <canvas id="chart-cr-reach"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     ABA: POR CIDADE
+     ============================ -->
+<section id="por-cidade" class="section">
+  <div class="section-title">Por Cidade <span>— Semana + FDS combinados, ordenável</span></div>
+  <div class="chart-box" style="margin-bottom:2rem">
+    <h3>Top 15 Cidades — Cliques</h3>
+    <canvas id="chart-city-clicks" style="max-height:380px"></canvas>
+  </div>
+  <div class="table-wrap">
+    <table id="city-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable('city-table',0)">Cidade</th>
+          <th onclick="sortTable('city-table',1)" class="sorted-desc">Cliques</th>
+          <th onclick="sortTable('city-table',2)">CTR %</th>
+          <th onclick="sortTable('city-table',3)">Alcance</th>
+          <th onclick="sortTable('city-table',4)">Impressões</th>
+          <th onclick="sortTable('city-table',5)">Investimento</th>
+          <th onclick="sortTable('city-table',6)">Melhor Criativo</th>
+        </tr>
+      </thead>
+      <tbody id="city-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================
+     ABA: POR BLOCO
+     ============================ -->
+<section id="por-bloco" class="section">
+  <div class="section-title">Por Bloco</div>
+  <div id="blocos-container"></div>
+</section>
+
+<!-- ============================
+     ABA: SEMANA vs FDS
+     ============================ -->
+<section id="semana-fds" class="section">
+  <div class="section-title">Semana vs FDS — Comparativo</div>
+
+  <div class="cmp-grid" id="svf-camp-cards"></div>
+
+  <div class="section-title" style="margin-top:1.5rem">Cliques por Criativo: Semana vs FDS</div>
+  <div class="chart-box" style="margin-bottom:2rem">
+    <h3>Cliques — Semana vs FDS por criativo</h3>
+    <canvas id="chart-svf-clicks" style="max-height:360px"></canvas>
+  </div>
+
+  <div class="section-title">Detalhamento por Criativo</div>
+  <div class="table-wrap">
+    <table id="svf-table">
+      <thead>
+        <tr>
+          <th>Criativo</th>
+          <th>Cliques Semana</th>
+          <th>Cliques FDS</th>
+          <th>Total Cliques</th>
+          <th>CTR Semana</th>
+          <th>CTR FDS</th>
+          <th>Alcance Semana</th>
+          <th>Alcance FDS</th>
+          <th>Invest. Semana</th>
+          <th>Invest. FDS</th>
+        </tr>
+      </thead>
+      <tbody id="svf-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================
+     ABA: VISÃO GERAL
+     ============================ -->
+<section id="visao-geral" class="section">
+  <div class="section-title">Visão Geral — Totais Combinados</div>
+  <div class="kpi-grid" id="kpi-total"></div>
+
+  <div class="charts-row">
+    <div class="chart-box">
+      <h3>Cliques: Semana vs FDS</h3>
+      <canvas id="chart-vg-clicks"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Alcance: Semana vs FDS</h3>
+      <canvas id="chart-vg-reach"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Impressões: Semana vs FDS</h3>
+      <canvas id="chart-vg-imp"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Investimento: Semana vs FDS</h3>
+      <canvas id="chart-vg-spend"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title">Campanhas Separadas</div>
+  <div class="cmp-grid">
+    <div class="cmp-card cmp-semana">
+      <h3><span style="color:var(--semana)">■</span> Campanha Semana</h3>
+      <div class="cmp-row clicks"><span class="ck">Cliques</span><span class="cv" id="vg-s-clicks"></span></div>
+      <div class="cmp-row"><span class="ck">Alcance</span><span class="cv" id="vg-s-reach"></span></div>
+      <div class="cmp-row"><span class="ck">Impressões</span><span class="cv" id="vg-s-imp"></span></div>
+      <div class="cmp-row"><span class="ck">Frequência</span><span class="cv" id="vg-s-freq"></span></div>
+      <div class="cmp-row"><span class="ck">Investimento</span><span class="cv" id="vg-s-spend"></span></div>
+      <div class="cmp-row"><span class="ck">CTR</span><span class="cv" id="vg-s-ctr"></span></div>
+    </div>
+    <div class="cmp-card cmp-fds">
+      <h3><span style="color:var(--fds)">■</span> Campanha Fim de Semana</h3>
+      <div class="cmp-row clicks"><span class="ck">Cliques</span><span class="cv" id="vg-f-clicks"></span></div>
+      <div class="cmp-row"><span class="ck">Alcance</span><span class="cv" id="vg-f-reach"></span></div>
+      <div class="cmp-row"><span class="ck">Impressões</span><span class="cv" id="vg-f-imp"></span></div>
+      <div class="cmp-row"><span class="ck">Frequência</span><span class="cv" id="vg-f-freq"></span></div>
+      <div class="cmp-row"><span class="ck">Investimento</span><span class="cv" id="vg-f-spend"></span></div>
+      <div class="cmp-row"><span class="ck">CTR</span><span class="cv" id="vg-f-ctr"></span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Gerado em: <strong>25/03/2026</strong> &nbsp;|&nbsp;
+  Período: <strong>17/03/2026 a 23/03/2026</strong><br>
+  Campanhas: <strong>120243592825500181</strong> (Semana) &nbsp;|&nbsp; <strong>120243710171930181</strong> (Fim de semana)<br>
+  Conta: <strong>act_4171350289603295</strong>
+</footer>
+
+<script>
+// =========================================
+// DADOS PRÉ-AGREGADOS
+// =========================================
+const D = {"camp_semana":{"reach":"870584","impressions":"1222119","frequency":"1.403792","clicks":"4923","spend":"2477.49","date_start":"2026-03-17","date_stop":"2026-03-23"},"camp_fds":{"reach":"1277568","impressions":"3259292","frequency":"2.551169","clicks":"7655","spend":"5679.82","date_start":"2026-03-17","date_stop":"2026-03-23"},"cr_semana":{"Copos":{"reach":222473,"impressions":257532,"clicks":1206,"spend":531.92,"frequency":1.0826,"ctr":0.468},"Cascão":{"reach":231581,"impressions":260324,"clicks":891,"spend":513.19,"frequency":1.0759,"ctr":0.342},"Shake":{"reach":638118,"impressions":704263,"clicks":2826,"spend":1432.38,"frequency":1.078,"ctr":0.401}},"cr_fds":{"Shake":{"reach":309225,"impressions":409426,"clicks":1149,"spend":687.5,"frequency":1.2787,"ctr":0.281},"Cascão":{"reach":167947,"impressions":235018,"clicks":621,"spend":368.68,"frequency":1.2634,"ctr":0.264},"Copos":{"reach":205214,"impressions":275551,"clicks":1002,"spend":429.51,"frequency":1.2795,"ctr":0.364},"Animação Cascão":{"reach":209679,"impressions":316698,"clicks":735,"spend":515.29,"frequency":1.4006,"ctr":0.232},"Animação Shake":{"reach":552385,"impressions":1149295,"clicks":2036,"spend":2182.91,"frequency":2.2895,"ctr":0.177},"Animação Cup":{"reach":500254,"impressions":873304,"clicks":2112,"spend":1495.93,"frequency":1.836,"ctr":0.242}},"cr_all":{"Copos":{"reach":427687,"impressions":533083,"clicks":2208,"spend":961.43,"frequency":1.1701,"ctr":0.414},"Cascão":{"reach":399528,"impressions":495342,"clicks":1512,"spend":881.87,"frequency":1.1578,"ctr":0.305},"Shake":{"reach":947343,"impressions":1113689,"clicks":3975,"spend":2119.88,"frequency":1.1672,"ctr":0.357},"Animação Cascão":{"reach":209679,"impressions":316698,"clicks":735,"spend":515.29,"frequency":1.4006,"ctr":0.232},"Animação Shake":{"reach":552385,"impressions":1149295,"clicks":2036,"spend":2182.91,"frequency":2.2895,"ctr":0.177},"Animação Cup":{"reach":500254,"impressions":873304,"clicks":2112,"spend":1495.93,"frequency":1.836,"ctr":0.242}},"city_all":{"Marília":{"reach":81702,"impressions":133939,"clicks":347,"spend":195.63,"frequency":1.6097,"ctr":0.259},"Ubiratã":{"reach":28526,"impressions":89687,"clicks":318,"spend":197.78,"frequency":3.3186,"ctr":0.355},"Bastos":{"reach":34368,"impressions":94334,"clicks":294,"spend":196.64,"frequency":2.8652,"ctr":0.312},"Vinhedo":{"reach":48243,"impressions":99256,"clicks":238,"spend":192.8,"frequency":2.0387,"ctr":0.24},"Belo Horizonte Jacui":{"reach":36597,"impressions":73995,"clicks":250,"spend":187.03,"frequency":2.0876,"ctr":0.338},"Londrina Higienópolis":{"reach":83356,"impressions":141405,"clicks":330,"spend":193.97,"frequency":1.6791,"ctr":0.233},"Terra Roxa":{"reach":8043,"impressions":35451,"clicks":137,"spend":194.56,"frequency":4.5945,"ctr":0.386},"Terenos":{"reach":22567,"impressions":72681,"clicks":254,"spend":186.36,"frequency":3.3454,"ctr":0.349},"Londrina Quiosque Catuai":{"reach":29958,"impressions":62325,"clicks":317,"spend":184.96,"frequency":2.1389,"ctr":0.509},"Catalão":{"reach":68310,"impressions":132398,"clicks":285,"spend":186.63,"frequency":1.936,"ctr":0.215},"Mundo Novo":{"reach":11921,"impressions":52799,"clicks":139,"spend":188.88,"frequency":4.7783,"ctr":0.263},"Taboão Da Serra":{"reach":33905,"impressions":71308,"clicks":206,"spend":197.61,"frequency":1.8403,"ctr":0.289},"Santa Barbara D´oeste":{"reach":73173,"impressions":127484,"clicks":289,"spend":193.95,"frequency":1.7222,"ctr":0.227},"Corbélia":{"reach":25096,"impressions":78084,"clicks":279,"spend":192.11,"frequency":3.2855,"ctr":0.357},"Palmitos - Sc":{"reach":26728,"impressions":87836,"clicks":250,"spend":188.42,"frequency":3.4532,"ctr":0.285},"Lins":{"reach":64098,"impressions":122594,"clicks":315,"spend":186.07,"frequency":1.8966,"ctr":0.257},"Santa Helena De Goiás":{"reach":40832,"impressions":107938,"clicks":229,"spend":194.58,"frequency":2.6865,"ctr":0.212},"Londrina 05 Arthur Tomas":{"reach":104807,"impressions":152002,"clicks":571,"spend":194.73,"frequency":1.4376,"ctr":0.376},"Piracicaba":{"reach":63129,"impressions":99043,"clicks":228,"spend":216.19,"frequency":1.4173,"ctr":0.23},"Betim 03":{"reach":46410,"impressions":74239,"clicks":233,"spend":182.24,"frequency":2.275,"ctr":0.314},"Nova Petrópolis":{"reach":36224,"impressions":95821,"clicks":295,"spend":196.4,"frequency":2.7833,"ctr":0.308},"Betim 2":{"reach":88116,"impressions":128000,"clicks":226,"spend":196.39,"frequency":1.4055,"ctr":0.177},"Jales":{"reach":45795,"impressions":111420,"clicks":298,"spend":194.72,"frequency":2.5016,"ctr":0.267},"Cascavel 2":{"reach":84690,"impressions":135303,"clicks":285,"spend":187.26,"frequency":1.5735,"ctr":0.211},"Patos De Minas":{"reach":77432,"impressions":137569,"clicks":335,"spend":186.59,"frequency":1.7483,"ctr":0.244},"Engenheiro Beltrão":{"reach":17459,"impressions":63410,"clicks":266,"spend":189.87,"frequency":3.8498,"ctr":0.419},"Londrina Inglaterra":{"reach":30981,"impressions":69769,"clicks":357,"spend":191.91,"frequency":2.3348,"ctr":0.512},"São Paulo 37":{"reach":44338,"impressions":86596,"clicks":286,"spend":194.49,"frequency":1.9699,"ctr":0.33},"Dois Irmãos":{"reach":31082,"impressions":73036,"clicks":205,"spend":129.53,"frequency":2.0985,"ctr":0.281},"Olímpia":{"reach":32842,"impressions":73599,"clicks":181,"spend":112.84,"frequency":1.8328,"ctr":0.246},"Rio Claro":{"reach":44099,"impressions":80025,"clicks":183,"spend":113.75,"frequency":1.5568,"ctr":0.229},"BH 10":{"reach":22406,"impressions":45600,"clicks":194,"spend":112.32,"frequency":1.7026,"ctr":0.425},"Cachoeirinha":{"reach":36788,"impressions":78493,"clicks":198,"spend":115.88,"frequency":1.761,"ctr":0.252},"São José do Rio Preto 04":{"reach":59485,"impressions":87288,"clicks":250,"spend":114.82,"frequency":1.2989,"ctr":0.286},"Nova Odessa":{"reach":36672,"impressions":72284,"clicks":177,"spend":117.82,"frequency":1.6729,"ctr":0.245},"Assis":{"reach":40521,"impressions":75143,"clicks":190,"spend":116.3,"frequency":1.5807,"ctr":0.253},"Monte Carmelo":{"reach":31677,"impressions":77507,"clicks":180,"spend":117.39,"frequency":2.0676,"ctr":0.232},"Jaguaruna":{"reach":25450,"impressions":65815,"clicks":137,"spend":109.81,"frequency":2.1107,"ctr":0.208},"Quirinópolis":{"reach":31909,"impressions":74669,"clicks":188,"spend":116.05,"frequency":1.9825,"ctr":0.252},"Balneário Gaivota":{"reach":17048,"impressions":55021,"clicks":198,"spend":113.61,"frequency":2.7172,"ctr":0.36},"São Borja":{"reach":36939,"impressions":82264,"clicks":324,"spend":114.46,"frequency":1.8916,"ctr":0.394},"Ponta Grossa 01":{"reach":59711,"impressions":90701,"clicks":270,"spend":116.58,"frequency":1.3371,"ctr":0.298},"São Paulo 34":{"reach":28300,"impressions":54605,"clicks":169,"spend":116.08,"frequency":1.6245,"ctr":0.309},"Joinville 04":{"reach":34617,"impressions":63659,"clicks":158,"spend":116.52,"frequency":1.6547,"ctr":0.248},"Presidente Olegário":{"reach":15903,"impressions":56683,"clicks":116,"spend":111.37,"frequency":3.0046,"ctr":0.205},"Araxá":{"reach":44520,"impressions":82973,"clicks":179,"spend":115.38,"frequency":1.5933,"ctr":0.216},"Garuva":{"reach":16009,"impressions":53252,"clicks":184,"spend":114.88,"frequency":2.9597,"ctr":0.346},"Itaperuçu":{"reach":26966,"impressions":69736,"clicks":196,"spend":114.05,"frequency":2.1872,"ctr":0.281},"Parobé":{"reach":36346,"impressions":78295,"clicks":224,"spend":114.89,"frequency":1.8306,"ctr":0.286},"Viçosa":{"reach":42398,"impressions":83343,"clicks":220,"spend":115.91,"frequency":1.6796,"ctr":0.264},"Resende":{"reach":50909,"impressions":84328,"clicks":223,"spend":116.38,"frequency":1.4398,"ctr":0.264},"Juiz De Fora 01":{"reach":57936,"impressions":86406,"clicks":177,"spend":111.92,"frequency":1.3132,"ctr":0.205}},"city_best":{"Marília":"Shake","Betim 03":"Shake","Vinhedo":"Copos","Catalão":"Shake","Mundo Novo":"Animação Shake","Betim 2":"Shake","Londrina 05 Arthur Tomas":"Animação Cup","Corbélia":"Shake","Patos De Minas":"Animação Cup","Engenheiro Beltrão":"Animação Shake","Piracicaba":"Shake","Cascavel 2":"Animação Shake","Terenos":"Animação Shake","Londrina Higienópolis":"Shake","Bastos":"Copos","Nova Petrópolis":"Shake","Belo Horizonte Jacui":"Shake","Londrina Quiosque Catuai":"Copos","Jales":"Copos","Lins":"Shake","Santa Helena De Goiás":"Shake","Terra Roxa":"Shake","Ubiratã":"Copos","Santa Barbara D´oeste":"Shake","Palmitos - Sc":"Shake","Taboão Da Serra":"Animação Cup","Londrina Inglaterra":"Shake","São Paulo 37":"Animação Shake","Dois Irmãos":"Shake","São Borja":"Copos","Garuva":"Shake","Olímpia":"Shake","BH 10":"Copos","Jaguaruna":"Shake","Resende":"Copos","São José do Rio Preto 04":"Copos","Rio Claro":"Animação Cup","Nova Odessa":"Copos","Balneário Gaivota":"Shake","Araxá":"Shake","Parobé":"Cascão","Itaperuçu":"Shake","Juiz De Fora 01":"Shake","Ponta Grossa 01":"Cascão","Viçosa":"Shake","Monte Carmelo":"Shake","Quirinópolis":"Shake","Joinville 04":"Animação Cup","Presidente Olegário":"Cascão","Cachoeirinha":"Copos","São Paulo 34":"Shake","Assis":"Animação Cup"},"bloco_all":{"Bloco 1":{"reach":1356804,"impressions":2736686,"clicks":7857,"spend":5388.77,"frequency":2.449,"ctr":0.287},"Bloco 2":{"reach":860533,"impressions":1744725,"clicks":4721,"spend":2768.54,"frequency":1.8708,"ctr":0.271}},"bloco_cr":{"Bloco 1":{"Copos":{"reach":266350,"impressions":318445,"clicks":1392,"spend":648.11,"frequency":1.184,"ctr":0.437},"Cascão":{"reach":279846,"impressions":321620,"clicks":1050,"spend":617.33,"frequency":1.1355,"ctr":0.326},"Shake":{"reach":593576,"impressions":699349,"clicks":2500,"spend":1471.11,"frequency":1.2015,"ctr":0.357},"Animação Shake":{"reach":388133,"impressions":863131,"clicks":1559,"spend":1695.5,"frequency":2.7511,"ctr":0.181},"Animação Cup":{"reach":285731,"impressions":482687,"clicks":1200,"spend":867.36,"frequency":1.779,"ctr":0.249},"Animação Cascão":{"reach":43856,"impressions":51454,"clicks":156,"spend":89.36,"frequency":1.1682,"ctr":0.303}},"Bloco 2":{"Cascão":{"reach":119682,"impressions":173722,"clicks":462,"spend":264.54,"frequency":1.1981,"ctr":0.266},"Shake":{"reach":353767,"impressions":414340,"clicks":1475,"spend":648.77,"frequency":1.1107,"ctr":0.356},"Copos":{"reach":161337,"impressions":214638,"clicks":816,"spend":313.32,"frequency":1.1473,"ctr":0.38},"Animação Cascão":{"reach":165823,"impressions":265244,"clicks":579,"spend":425.93,"frequency":1.6621,"ctr":0.218},"Animação Shake":{"reach":164252,"impressions":286164,"clicks":477,"spend":487.41,"frequency":1.7511,"ctr":0.167},"Animação Cup":{"reach":214523,"impressions":390617,"clicks":912,"spend":628.57,"frequency":1.9026,"ctr":0.233}}}};
+
+// =========================================
+// CREATIVE METADATA
+// =========================================
+const CREATIVES = [
+  {
+    name: 'Shake',
+    type: 'image',
+    badge: '🖼 Imagem',
+    badgeClass: 'img',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t45.1600-4/651177422_26557695640492472_1821335695008748775_n.png?stp=dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=d5bd00&_nc_ohc=-yZsZICWdCMQ7kNvwFE2rmL&_nc_oc=Adqs95t9xBUGDYOBY8fzVakvktBCZje1R6WXnKioEFyHqON-5NDfe-e2CnM277a_52k&_nc_zt=1&_nc_ht=scontent.ffln5-1.fna&edm=AAwGEdEEAAAA&_nc_gid=9SSfeLBEc8f_r8x6B7Sf7A&_nc_tpa=Q5bMBQGJxA1q7dp2UjD633Asn5jBe1HYKwARh4RZWM2U4FfQ93PFDwHFNr-tu7gynn3n70gRzx7f9QIAOg&oh=00_Afzqp5j1h7sjwa8sf8NO79q8r4S1Ddxlmvo1XoO1QxC0-A&oe=69C9B2B0',
+    badgeColor: 'badge-shake'
+  },
+  {
+    name: 'Copos',
+    type: 'image',
+    badge: '🖼 Imagem',
+    badgeClass: 'img',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t45.1600-4/651500225_26557695807159122_4259266062215329366_n.png?_nc_cat=103&ccb=1-7&_nc_ohc=mfiJscNPJ3kQ7kNvwESDSHj&_nc_oc=AdpTog7M4H0st05lvZwiAriZrPaAJyiCylpQuF_w3YluCK3q5XUj1RQ4UngsgR8EuIc&_nc_zt=1&_nc_ht=scontent.ffln5-1.fna&edm=AAwGEdEEAAAA&_nc_gid=mtyo9EvU29noihFtZvf5iw&_nc_tpa=Q5bMBQG1L-XETgWyREjSrd01S0Sg3F2uaU7GNvSuv-M2gSuRKlLAjvBlTQYEHhjyoW6QOMEoXM9ph7OM7w&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_Afwc143r2LTLTNpdVfbiQ5-EZ3mKTIUsKqfKFQOlh-Mwsw&oe=69C9ACB4',
+    badgeColor: 'badge-copos'
+  },
+  {
+    name: 'Cascão',
+    type: 'image',
+    badge: '🖼 Imagem',
+    badgeClass: 'img',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t45.1600-4/651160714_26557695650492471_7743866796126616529_n.png?_nc_cat=108&ccb=1-7&_nc_ohc=onGyhmegKWoQ7kNvwHig97s&_nc_oc=AdqF1jm8NgKJd7XhbOocbLAOqiwL-PAp5kBelkVPyZeWcz1NI2KCoBolrw6EcKlKZ4k&_nc_zt=1&_nc_ht=scontent.ffln5-1.fna&edm=AAwGEdEEAAAA&_nc_gid=ePJP05ocD-leOi285ciiaA&_nc_tpa=Q5bMBQGt5KGU6M13ww8Me9aJvbKvqiB5QH_rvUbUIz2XbpFDe-7pDD-SJeHfyotWSlPCMm7LOo0H77b1Qw&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AfwVov0zfp-YRUPi3237BUuGAmQWCzYLizKpoBbkrCLoIw&oe=69C98976',
+    badgeColor: 'badge-cascao'
+  },
+  {
+    name: 'Animação Cascão',
+    type: 'video',
+    badge: '🎬 Vídeo',
+    badgeClass: 'video',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQMgBfzuti38BKxuest2fiNBlh9mDzv1Kh2vaMp1H49RI6RDKItBBZ6Ea5cT8FpG0BDXDvSzC_lrHwrIGN7nLpRGWIAFHj8uHia1uNxG1tom4A.mp4?_nc_cat=107&_nc_oc=AdpaRZ-gOILId7IGYrl5zEDBel9Tdfjoszk5PFd1v00z-eWcg7vFn0_NVDPf_DrJTt0&_nc_sid=5e9851&_nc_ht=scontent.ffln5-1.fna.fbcdn.net&_nc_ohc=M48ePbgi2v4Q7kNvwELIThE&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5GQUNFQk9PSy4uQzMuNzIwLmRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHAiLCJ4cHZfYXNzZXRfaWQiOjI0MTYzNDA3Nzg4MDI1MzMsImFzc2V0X2FnZV9kYXlzIjo0LCJ2aV91c2VjYXNlX2lkIjoxMDc5OSwiZHVyYXRpb25fcyI6OCwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&vs=9e030b1910d75549&_nc_vs=HBksFQIYRWZiX2VwaGVtZXJhbC8zNzQ2OTlGNDNDRTUxOUU0ODg1ODYzNkQ3RTczOTZCNl9tdF8xX3ZpZGVvX2Rhc2hpbml0Lm1wNBUAAsgBEgAVAhhAZmJfcGVybWFuZW50L0Q5NEU5MUQ0RUJENkVGN0ZCMEY0RUY0RTZDOEYyMUFCX2F1ZGlvX2Rhc2hpbml0Lm1wNBUCAsgBEgAoABgAGwKIB3VzZV9vaWwBMRJwcm9ncmVzc2l2ZV9yZWNpcGUBMRUAACbK9bbcxenKCBUCKAJDMywXQCAAAAAAAAAYGWRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHARAHUCZd6oAQA&_nc_gid=CkhWsAlQ_gIXSfhup6muJQ&edm=APRAPSkEAAAA&_nc_zt=28&_nc_tpa=Q5bMBQEaRX6wdcYOQVORB65TNY4wjYGr30VBwmBUuI9ilwVTPSdBdBXtHKXIsEb_N5MTvRhbHj9DFe56pw&oh=00_AfyTDtCEik93ECfY_N-c5wFf2H98rbqkCp36UbNRB7axHQ&oe=69C99A11&bitrate=516070&tag=dash_h264-basic-gen2_720p',
+    poster: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t15.5256-10/652682511_922707630550259_4487115388474499456_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=e3495b&_nc_ohc=Ea1dMWebQ4QQ7kNvwEULwjK&_nc_oc=AdpZDFsHn1sq1V1dYjestnA9_hWWQE62Xx1FpDxPd2VunvFONEoIwrGupZ-P0_dpyfA&_nc_zt=23&_nc_ht=scontent.ffln5-1.fna&edm=APRAPSkEAAAA&_nc_gid=CkhWsAlQ_gIXSfhup6muJQ&_nc_tpa=Q5bMBQGCcSFBEfswlkutW85Uf9YVjZVbtXPKf6FTeX5iIOTF3oVHhu1YQYD3B9SfI0Mlp_QjQe92_XnnJA&oh=00_Afzrod18O7GtSjBLtm_Rfo6tbfY4yvxbBRkcO-Q5pogy0g&oe=69C9B8A9',
+    badgeColor: 'badge-anim-cascao'
+  },
+  {
+    name: 'Animação Shake',
+    type: 'video',
+    badge: '🎬 Vídeo',
+    badgeClass: 'video',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQPFv1jMvXSCbWJlhjxOpZUDj044YbbvAd3bFWcROBoarszahvru8D5Os6paIfX4_Y-nyuM9XjwFHt0rtT9UNkJiAf9S0hA4-6JO7UBWlGyhgQ.mp4?_nc_cat=106&_nc_oc=AdqkQSs26o8tSAeNT9b-vy4zKtG_0yMLMVVYbdWctZMQfZEDVSyv0yV1zZ8zNja6GM4&_nc_sid=5e9851&_nc_ht=scontent.ffln5-1.fna.fbcdn.net&_nc_ohc=GOMEJ_L4qdoQ7kNvwFbZw-m&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5GQUNFQk9PSy4uQzMuNzIwLmRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHAiLCJ4cHZfYXNzZXRfaWQiOjEyNDkzMDk0MDczODg3MTMsImFzc2V0X2FnZV9kYXlzIjo0LCJ2aV91c2VjYXNlX2lkIjoxMDc5OSwiZHVyYXRpb25fcyI6OSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&vs=69a358f260d4d54b&_nc_vs=HBksFQIYRWZiX2VwaGVtZXJhbC84NjQ4QzVBNTNFRjI3NEVEODIwOEE0RTUwOEUyNkZBNl9tdF8xX3ZpZGVvX2Rhc2hpbml0Lm1wNBUAAsgBEgAVAhhAZmJfcGVybWFuZW50LzVGNDM3REJCMEIxQUM4ODUyOEZDRDI2ODc5MDQ1Mzk0X2F1ZGlvX2Rhc2hpbml0Lm1wNBUCAsgBEgAoABgAGwKIB3VzZV9vaWwBMRJwcm9ncmVzc2l2ZV9yZWNpcGUBMRUAACbSkIm3sI-4BBUCKAJDMywXQCIAAAAAAAAYGWRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHARAHUCZd6oAQA&_nc_gid=NGIXjbqEoHwBYgVnhHMSoA&edm=APRAPSkEAAAA&_nc_zt=28&_nc_tpa=Q5bMBQHZm-ZL2glXXLGu5ouKy5U_PBqCTFojV7FfjUXeRZXRaU36Wf-aIt4oPXnPejI4joyravVW-wawyw&oh=00_Afx7OXLI8sxvni6ZWr4FUIjac_0cmLi38WR6pK4iU7G-Gg&oe=69C993BE&bitrate=451834&tag=dash_h264-basic-gen2_720p',
+    poster: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t15.5256-10/654728576_26868749626075949_2100589445235983869_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=e3495b&_nc_ohc=rXxnFChuuBMQ7kNvwEYO_Nw&_nc_oc=Adp7GQOuxihfDt27VjJ8BDNSMmNrGBY5jwUwcLuowjiHqgUunqLqaBpi27i5ZGscAZE&_nc_zt=23&_nc_ht=scontent.ffln5-1.fna&edm=APRAPSkEAAAA&_nc_gid=NGIXjbqEoHwBYgVnhHMSoA&_nc_tpa=Q5bMBQFQyZi0IHJq7qMVLhaKfoSLPrJIlDcRo_nx2FkOhSnTRpROGLnJNPz6fKhoHD84gz8tmp8hqd_jiA&oh=00_Afy0Bn6MdI1fYQviiGw_Vy8tE1_y9MIvltFymKQqTTJ3Uw&oe=69C9AEA8',
+    badgeColor: 'badge-anim-shake'
+  },
+  {
+    name: 'Animação Cup',
+    type: 'video',
+    badge: '🎬 Vídeo',
+    badgeClass: 'video',
+    mediaUrl: 'https://scontent.ffln5-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQMiJoW1cTfHE6Cphg91870uG6FWUKTyLAUBueIILF3TpAUYXIkVLh_ulvXSH4sARCHUtVXBvXcYCP32_EhVbiGvEkzOSC8exH5mhOUIF2xk6A.mp4?_nc_cat=106&_nc_oc=AdpA7CsGUSCN95-wFhxCiZQyF4khZ_nWTYDmjTNXDtpOxJwV0v1mUVa7534dcX1xelM&_nc_sid=5e9851&_nc_ht=scontent.ffln5-1.fna.fbcdn.net&_nc_ohc=ktObSh0bmBwQ7kNvwGop2Qc&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5GQUNFQk9PSy4uQzMuNzIwLmRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHAiLCJ4cHZfYXNzZXRfaWQiOjE0MTQ1NDM0MjY2NDkzNzAsImFzc2V0X2FnZV9kYXlzIjo0LCJ2aV91c2VjYXNlX2lkIjoxMDc5OSwiZHVyYXRpb25fcyI6OSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&vs=7b59c463f15df573&_nc_vs=HBksFQIYRWZiX2VwaGVtZXJhbC84QzREOEU5NjUzRjE0NzBBMUQ4ODc4RDUwM0UyNDZBQV9tdF8xX3ZpZGVvX2Rhc2hpbml0Lm1wNBUAAsgBEgAVAhhAZmJfcGVybWFuZW50LzhCNDMxNTRFMTk2MEE1MERDNzM4NUE2RDBEOEVDOEJFX2F1ZGlvX2Rhc2hpbml0Lm1wNBUCAsgBEgAoABgAGwKIB3VzZV9vaWwBMRJwcm9ncmVzc2l2ZV9yZWNpcGUBMRUAACa09LfnoaGDBRUCKAJDMywXQCIAAAAAAAAYGWRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHARAHUCZd6oAQA&_nc_gid=XGjwaDwvWn_ox3jj4iAPPw&edm=APRAPSkEAAAA&_nc_zt=28&_nc_tpa=Q5bMBQGvUJvoJ-DUDKMA173q1Jk0jBAc8HWqGcCc0NzHtSpGQAUs8uoJWlxl5XqzJObFR7wg3OwrNxaa9Q&oh=00_Afxf81KowbSRvTDstw37ypSI4CTwEZbZfLs5BvKLxJ8cNw&oe=69C9B392&bitrate=801709&tag=dash_h264-basic-gen2_720p',
+    poster: 'https://scontent.ffln5-1.fna.fbcdn.net/v/t15.5256-10/655081556_1832964017402114_331279974523478951_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=e3495b&_nc_ohc=bUnV7oWpf4EQ7kNvwGLNN7L&_nc_oc=AdqdOR60LY2wtPkCvV0hfwOEXk6esPXVR4wWsqO67Dk0kUBZJbX-V_CaCFB5K4JfUBI&_nc_zt=23&_nc_ht=scontent.ffln5-1.fna&edm=APRAPSkEAAAA&_nc_gid=XGjwaDwvWn_ox3jj4iAPPw&_nc_tpa=Q5bMBQH3pTdimSsX_bLo-iYfFwEb02pNbd1DTD7Oym5W7YVJRSjUXmVwrnpbLosGMcVeHGPbJECYO43A2w&oh=00_AfyXziJLf58MMGqTw-H4er7hcA3C7k-EO7b7B5OhYwt46Q&oe=69C9B0C9',
+    badgeColor: 'badge-anim-cup'
+  }
+];
+
+// =========================================
+// HELPERS
+// =========================================
+function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
+function fmtR(n) { return 'R$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtPct(n) { return Number(n).toFixed(2) + '%'; }
+function fmtFreq(n) { return Number(n).toFixed(2); }
+
+function creativeBadgeClass(name) {
+  const map = {
+    'Shake': 'badge-shake',
+    'Copos': 'badge-copos',
+    'Cascão': 'badge-cascao',
+    'Animação Cascão': 'badge-anim-cascao',
+    'Animação Shake': 'badge-anim-shake',
+    'Animação Cup': 'badge-anim-cup'
+  };
+  return map[name] || 'badge-cascao';
+}
+
+// =========================================
+// TAB SWITCHING
+// =========================================
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// =========================================
+// TABLE SORTING
+// =========================================
+const sortState = {};
+function sortTable(tableId, colIdx) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const key = tableId + '_' + colIdx;
+  const asc = !sortState[key];
+  sortState[key] = asc;
+
+  // update header styling
+  table.querySelectorAll('th').forEach((th, i) => {
+    th.classList.remove('sorted-asc','sorted-desc');
+    if (i === colIdx) th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+  });
+
+  rows.sort((a, b) => {
+    const av = a.cells[colIdx].dataset.val !== undefined ? a.cells[colIdx].dataset.val : a.cells[colIdx].textContent;
+    const bv = b.cells[colIdx].dataset.val !== undefined ? b.cells[colIdx].dataset.val : b.cells[colIdx].textContent;
+    const an = parseFloat(av.replace(/[^\d.-]/g, ''));
+    const bn = parseFloat(bv.replace(/[^\d.-]/g, ''));
+    if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+    return asc ? av.localeCompare(bv, 'pt-BR') : bv.localeCompare(av, 'pt-BR');
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// =========================================
+// CHART HELPERS
+// =========================================
+const chartDefaults = {
+  plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+    y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
+  }
+};
+
+function hbarChart(canvasId, labels, values, color, xLabel) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: color + 'bb', borderColor: color, borderWidth: 1.5, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8b949e', font:{size:10} }, grid: { color: '#21262d' }, title: { display: !!xLabel, text: xLabel, color: '#8b949e' } },
+        y: { ticks: { color: '#e6edf3', font:{size:11} }, grid: { color: '#21262d' } }
+      }
+    }
+  });
+}
+
+function vbarChart(canvasId, labels, datasets, options) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font:{size:11} } } },
+      scales: {
+        x: { ticks: { color: '#8b949e', font:{size:10} }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e', font:{size:10} }, grid: { color: '#21262d' } }
+      },
+      ...options
+    }
+  });
+}
+
+function doughnutChart(canvasId, labels, values, colors) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#161b22', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#8b949e', font:{size:11} } } } }
+  });
+}
+
+// =========================================
+// BUILD: CRIATIVOS
+// =========================================
+function buildCreativos() {
+  const grid = document.getElementById('cr-cards');
+  CREATIVES.forEach(cr => {
+    const d = D.cr_all[cr.name] || { reach: 0, impressions: 0, clicks: 0, spend: 0, ctr: 0, frequency: 0 };
+    const ctrV = d.impressions ? (d.clicks / d.impressions * 100).toFixed(2) : '0.00';
+
+    let mediaHtml = '';
+    if (cr.type === 'video') {
+      mediaHtml = `<video src="${cr.mediaUrl}" poster="${cr.poster}" controls loop muted playsinline preload="none" style="width:100%;height:100%;object-fit:cover"></video>`;
+    } else {
+      mediaHtml = `<img src="${cr.mediaUrl}" alt="${cr.name}" loading="lazy" onerror="this.style.background='#1c2128';this.alt='Imagem indisponível'">`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'cr-card';
+    card.innerHTML = `
+      <div class="media-wrap">
+        ${mediaHtml}
+        <div class="badge-overlay ${cr.badgeClass}">${cr.badge}</div>
+      </div>
+      <div class="cr-body">
+        <div class="cr-name">${cr.name}</div>
+        <div class="cr-type">${cr.type === 'video' ? 'Vídeo — FDS apenas' : 'Imagem estática — Semana + FDS'}</div>
+        <div class="cr-metrics">
+          <div class="cr-metric clicks-row">
+            <span class="mk">Cliques</span>
+            <span class="mv">${fmt(d.clicks)}</span>
+          </div>
+          <div class="cr-metric">
+            <span class="mk">CTR</span>
+            <span class="mv">${ctrV}%</span>
+          </div>
+          <div class="cr-metric">
+            <span class="mk">Alcance</span>
+            <span class="mv">${fmt(d.reach)}</span>
+          </div>
+          <div class="cr-metric">
+            <span class="mk">Impressões</span>
+            <span class="mv">${fmt(d.impressions)}</span>
+          </div>
+          <div class="cr-metric">
+            <span class="mk">Investimento</span>
+            <span class="mv">${fmtR(d.spend)}</span>
+          </div>
+          <div class="cr-metric">
+            <span class="mk">Frequência</span>
+            <span class="mv">${fmtFreq(d.frequency)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Build ranking charts
+  const sorted = [...CREATIVES].sort((a, b) => (D.cr_all[b.name]?.clicks || 0) - (D.cr_all[a.name]?.clicks || 0));
+  const names = sorted.map(c => c.name);
+  const clicks = sorted.map(c => D.cr_all[c.name]?.clicks || 0);
+  const ctrs = sorted.map(c => D.cr_all[c.name]?.ctr || 0);
+  const reaches = sorted.map(c => D.cr_all[c.name]?.reach || 0);
+
+  hbarChart('chart-cr-clicks', names, clicks, '#f0c040');
+  hbarChart('chart-cr-ctr', names, ctrs, '#56d364', 'CTR %');
+  hbarChart('chart-cr-reach', names, reaches, '#58a6ff');
+}
+
+// =========================================
+// BUILD: POR CIDADE
+// =========================================
+function buildCidade() {
+  const cities = Object.entries(D.city_all).sort((a, b) => b[1].clicks - a[1].clicks);
+
+  // Chart top 15
+  const top15 = cities.slice(0, 15);
+  hbarChart('chart-city-clicks', top15.map(c=>c[0]), top15.map(c=>c[1].clicks), '#f0c040');
+
+  // Table
+  const tbody = document.getElementById('city-tbody');
+  cities.forEach(([city, d]) => {
+    const best = D.city_best[city] || '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${city}</td>
+      <td class="gold" data-val="${d.clicks}">${fmt(d.clicks)}</td>
+      <td data-val="${d.ctr}">${d.ctr.toFixed(2)}%</td>
+      <td data-val="${d.reach}">${fmt(d.reach)}</td>
+      <td data-val="${d.impressions}">${fmt(d.impressions)}</td>
+      <td data-val="${d.spend}">${fmtR(d.spend)}</td>
+      <td class="best-badge"><span class="badge ${creativeBadgeClass(best)}">${best}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// =========================================
+// BUILD: POR BLOCO
+// =========================================
+function buildBlocos() {
+  const container = document.getElementById('blocos-container');
+  const blocoInfo = {
+    'Bloco 1': { date: '17/03/2026', color: '#58a6ff' },
+    'Bloco 2': { date: '20/03/2026', color: '#8b5cf6' },
+    'Bloco 3': { date: '24/03/2026', color: '#56d364' }
+  };
+
+  Object.entries(D.bloco_all).forEach(([bloco, total]) => {
+    const info = blocoInfo[bloco] || { date: '', color: '#f0c040' };
+    const crs = D.bloco_cr[bloco] || {};
+    const sortedCrs = Object.entries(crs).sort((a, b) => b[1].clicks - a[1].clicks);
+    const winner = sortedCrs[0];
+
+    const section = document.createElement('div');
+    section.className = 'bloco-section';
+    section.style.borderTop = `3px solid ${info.color}`;
+
+    let tableRows = sortedCrs.map(([name, d]) => `
+      <tr>
+        <td><span class="badge ${creativeBadgeClass(name)}">${name}</span></td>
+        <td class="gold" data-val="${d.clicks}">${fmt(d.clicks)}</td>
+        <td data-val="${d.ctr}">${d.ctr.toFixed(2)}%</td>
+        <td data-val="${d.reach}">${fmt(d.reach)}</td>
+        <td data-val="${d.impressions}">${fmt(d.impressions)}</td>
+        <td data-val="${d.spend}">${fmtR(d.spend)}</td>
+        <td data-val="${d.frequency}">${fmtFreq(d.frequency)}</td>
+      </tr>
+    `).join('');
+
+    const chartId = `chart-bloco-${bloco.replace(' ','_')}`;
+
+    section.innerHTML = `
+      <div class="bloco-header">
+        <h2>${bloco}</h2>
+        <span class="bdate">Início: ${info.date}</span>
+      </div>
+      <div class="bloco-kpi">
+        <div class="bk gold"><div class="bl">Cliques</div><div class="bv">${fmt(total.clicks)}</div></div>
+        <div class="bk"><div class="bl">Alcance</div><div class="bv">${fmt(total.reach)}</div></div>
+        <div class="bk"><div class="bl">Impressões</div><div class="bv">${fmt(total.impressions)}</div></div>
+        <div class="bk"><div class="bl">Investimento</div><div class="bv">${fmtR(total.spend)}</div></div>
+        <div class="bk"><div class="bl">CTR</div><div class="bv">${total.ctr.toFixed(2)}%</div></div>
+        <div class="bk"><div class="bl">Frequência</div><div class="bv">${fmtFreq(total.frequency)}</div></div>
+      </div>
+      ${winner ? `<div class="bloco-winner"><span class="trophy">🏆</span> Melhor criativo em cliques: <strong style="color:var(--gold)">${winner[0]}</strong> — ${fmt(winner[1].clicks)} cliques</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem">
+        <div class="chart-box" style="padding:1rem">
+          <h3>Cliques por Criativo — ${bloco}</h3>
+          <canvas id="${chartId}" style="max-height:220px"></canvas>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>Criativo</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>Alcance</th>
+              <th>Impressões</th>
+              <th>Investimento</th>
+              <th>Frequência</th>
+            </tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    container.appendChild(section);
+
+    // draw chart after element is in DOM
+    setTimeout(() => {
+      hbarChart(chartId, sortedCrs.map(c=>c[0]), sortedCrs.map(c=>c[1].clicks), info.color);
+    }, 50);
+  });
+}
+
+// =========================================
+// BUILD: SEMANA vs FDS
+// =========================================
+function buildSvF() {
+  // Campaign comparison cards
+  const s = D.camp_semana, f = D.camp_fds;
+  const sClicks = +s.clicks, fClicks = +f.clicks;
+  const totalClicks = sClicks + fClicks;
+  const sCTR = (+s.clicks / +s.impressions * 100).toFixed(2);
+  const fCTR = (+f.clicks / +f.impressions * 100).toFixed(2);
+
+  document.getElementById('svf-camp-cards').innerHTML = `
+    <div class="cmp-card cmp-semana">
+      <h3><span style="color:var(--semana)">■</span> Campanha Semana</h3>
+      <div class="cmp-row clicks"><span class="ck">Cliques</span><span class="cv">${fmt(s.clicks)}</span></div>
+      <div class="cmp-row"><span class="ck">Alcance</span><span class="cv">${fmt(s.reach)}</span></div>
+      <div class="cmp-row"><span class="ck">Impressões</span><span class="cv">${fmt(s.impressions)}</span></div>
+      <div class="cmp-row"><span class="ck">Frequência</span><span class="cv">${fmtFreq(s.frequency)}</span></div>
+      <div class="cmp-row"><span class="ck">Investimento</span><span class="cv">${fmtR(s.spend)}</span></div>
+      <div class="cmp-row"><span class="ck">CTR</span><span class="cv">${sCTR}%</span></div>
+    </div>
+    <div class="cmp-card cmp-fds">
+      <h3><span style="color:var(--fds)">■</span> Campanha Fim de Semana</h3>
+      <div class="cmp-row clicks"><span class="ck">Cliques</span><span class="cv">${fmt(f.clicks)}</span></div>
+      <div class="cmp-row"><span class="ck">Alcance</span><span class="cv">${fmt(f.reach)}</span></div>
+      <div class="cmp-row"><span class="ck">Impressões</span><span class="cv">${fmt(f.impressions)}</span></div>
+      <div class="cmp-row"><span class="ck">Frequência</span><span class="cv">${fmtFreq(f.frequency)}</span></div>
+      <div class="cmp-row"><span class="ck">Investimento</span><span class="cv">${fmtR(f.spend)}</span></div>
+      <div class="cmp-row"><span class="ck">CTR</span><span class="cv">${fCTR}%</span></div>
+    </div>
+  `;
+
+  // Chart: cliques por criativo Semana vs FDS
+  const allCrNames = [...new Set([...Object.keys(D.cr_semana), ...Object.keys(D.cr_fds)])];
+  const semanaClicks = allCrNames.map(n => D.cr_semana[n]?.clicks || 0);
+  const fdsClicks = allCrNames.map(n => D.cr_fds[n]?.clicks || 0);
+
+  vbarChart('chart-svf-clicks', allCrNames, [
+    { label: 'Semana', data: semanaClicks, backgroundColor: '#58a6ff88', borderColor: '#58a6ff', borderWidth: 1.5, borderRadius: 4 },
+    { label: 'FDS', data: fdsClicks, backgroundColor: '#8b5cf688', borderColor: '#8b5cf6', borderWidth: 1.5, borderRadius: 4 }
+  ]);
+
+  // Table
+  const tbody = document.getElementById('svf-tbody');
+  allCrNames.forEach(name => {
+    const sd = D.cr_semana[name] || {};
+    const fd = D.cr_fds[name] || {};
+    const totalC = (sd.clicks || 0) + (fd.clicks || 0);
+    const diff = (fd.clicks || 0) - (sd.clicks || 0);
+    const diffStr = sd.clicks ? (diff >= 0 ? `<span style="color:var(--green)">+${fmt(diff)}</span>` : `<span style="color:var(--red)">${fmt(diff)}</span>`) : '—';
+    tbody.innerHTML += `<tr>
+      <td><span class="badge ${creativeBadgeClass(name)}">${name}</span></td>
+      <td class="gold" data-val="${sd.clicks||0}">${fmt(sd.clicks||0)}</td>
+      <td class="gold" data-val="${fd.clicks||0}">${fmt(fd.clicks||0)}</td>
+      <td data-val="${totalC}" style="font-weight:700">${fmt(totalC)}</td>
+      <td data-val="${sd.ctr||0}">${sd.ctr ? sd.ctr.toFixed(2)+'%' : '—'}</td>
+      <td data-val="${fd.ctr||0}">${fd.ctr ? fd.ctr.toFixed(2)+'%' : '—'}</td>
+      <td data-val="${sd.reach||0}">${sd.reach ? fmt(sd.reach) : '—'}</td>
+      <td data-val="${fd.reach||0}">${fd.reach ? fmt(fd.reach) : '—'}</td>
+      <td data-val="${sd.spend||0}">${sd.spend ? fmtR(sd.spend) : '—'}</td>
+      <td data-val="${fd.spend||0}">${fd.spend ? fmtR(fd.spend) : '—'}</td>
+    </tr>`;
+  });
+}
+
+// =========================================
+// BUILD: VISÃO GERAL
+// =========================================
+function buildVisaoGeral() {
+  const s = D.camp_semana, f = D.camp_fds;
+  const totalReach = +s.reach + +f.reach;
+  const totalImp = +s.impressions + +f.impressions;
+  const totalClicks = +s.clicks + +f.clicks;
+  const totalSpend = +s.spend + +f.spend;
+  const avgFreq = ((+s.frequency + +f.frequency) / 2).toFixed(2);
+  const totalCTR = (totalClicks / totalImp * 100).toFixed(2);
+
+  document.getElementById('kpi-total').innerHTML = `
+    <div class="kpi-card" title="Alcance único combinado das duas campanhas">
+      <div class="label">Alcance Total</div>
+      <div class="value">${fmt(totalReach)}</div>
+      <div class="sub">Semana + FDS</div>
+      <div class="tip">Semana: ${fmt(s.reach)} | FDS: ${fmt(f.reach)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Impressões</div>
+      <div class="value">${fmt(totalImp)}</div>
+      <div class="sub">Exibições totais</div>
+      <div class="tip">Semana: ${fmt(s.impressions)} | FDS: ${fmt(f.impressions)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Freq. Média</div>
+      <div class="value">${avgFreq}</div>
+      <div class="sub">Média das campanhas</div>
+      <div class="tip">Semana: ${(+s.frequency).toFixed(2)} | FDS: ${(+f.frequency).toFixed(2)}</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="label">Cliques Totais</div>
+      <div class="value">${fmt(totalClicks)}</div>
+      <div class="sub">CTR: ${totalCTR}%</div>
+      <div class="tip">Semana: ${fmt(s.clicks)} | FDS: ${fmt(f.clicks)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Investimento</div>
+      <div class="value" style="font-size:1.3rem">${fmtR(totalSpend)}</div>
+      <div class="sub">Total investido</div>
+      <div class="tip">Semana: ${fmtR(s.spend)} | FDS: ${fmtR(f.spend)}</div>
+    </div>
+  `;
+
+  // Charts
+  vbarChart('chart-vg-clicks', ['Semana', 'FDS'], [
+    { label: 'Cliques', data: [+s.clicks, +f.clicks],
+      backgroundColor: ['#58a6ff88','#8b5cf688'],
+      borderColor: ['#58a6ff','#8b5cf6'], borderWidth:2, borderRadius:6 }
+  ], { plugins: { legend: { display: false } } });
+
+  vbarChart('chart-vg-reach', ['Semana', 'FDS'], [
+    { label: 'Alcance', data: [+s.reach, +f.reach],
+      backgroundColor: ['#56d36488','#56d36444'],
+      borderColor: ['#56d364','#56d364'], borderWidth:2, borderRadius:6 }
+  ], { plugins: { legend: { display: false } } });
+
+  vbarChart('chart-vg-imp', ['Semana', 'FDS'], [
+    { label: 'Impressões', data: [+s.impressions, +f.impressions],
+      backgroundColor: ['#f0c04088','#f0c04044'],
+      borderColor: ['#f0c040','#f0c040'], borderWidth:2, borderRadius:6 }
+  ], { plugins: { legend: { display: false } } });
+
+  vbarChart('chart-vg-spend', ['Semana', 'FDS'], [
+    { label: 'Investimento', data: [+s.spend, +f.spend],
+      backgroundColor: ['#f8514988','#f8514944'],
+      borderColor: ['#f85149','#f85149'], borderWidth:2, borderRadius:6 }
+  ], { plugins: { legend: { display: false } } });
+
+  // Fill campaign cards
+  const sCTR = (+s.clicks / +s.impressions * 100).toFixed(2);
+  const fCTR = (+f.clicks / +f.impressions * 100).toFixed(2);
+  document.getElementById('vg-s-clicks').textContent = fmt(s.clicks);
+  document.getElementById('vg-s-clicks').style.color = 'var(--gold)';
+  document.getElementById('vg-s-reach').textContent = fmt(s.reach);
+  document.getElementById('vg-s-imp').textContent = fmt(s.impressions);
+  document.getElementById('vg-s-freq').textContent = fmtFreq(s.frequency);
+  document.getElementById('vg-s-spend').textContent = fmtR(s.spend);
+  document.getElementById('vg-s-ctr').textContent = sCTR + '%';
+  document.getElementById('vg-f-clicks').textContent = fmt(f.clicks);
+  document.getElementById('vg-f-clicks').style.color = 'var(--gold)';
+  document.getElementById('vg-f-reach').textContent = fmt(f.reach);
+  document.getElementById('vg-f-imp').textContent = fmt(f.impressions);
+  document.getElementById('vg-f-freq').textContent = fmtFreq(f.frequency);
+  document.getElementById('vg-f-spend').textContent = fmtR(f.spend);
+  document.getElementById('vg-f-ctr').textContent = fCTR + '%';
+}
+
+// =========================================
+// INIT
+// =========================================
+document.addEventListener('DOMContentLoaded', function() {
+  buildCreativos();
+  buildCidade();
+  buildBlocos();
+  buildSvF();
+  buildVisaoGeral();
+});
+</script>
+</body>
+</html>
